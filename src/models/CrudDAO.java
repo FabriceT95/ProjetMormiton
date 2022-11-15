@@ -11,7 +11,7 @@ public interface CrudDAO<E> {
 
     List<E> findByName(String s);
 
-    List<E> findByMealType(String s);
+    List<E> findByMealType(MealType mealType);
 
     List<E> findByKeyword(String s);
 

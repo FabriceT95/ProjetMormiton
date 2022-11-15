@@ -1,8 +1,8 @@
 package domain;
 
-import java_jdbc.TpRecettes.models.CrudDAO;
-import java_jdbc.TpRecettes.models.DaoFactory;
-import java_jdbc.TpRecettes.models.Recipe;
+import models.CrudDAO;
+import models.DaoFactory;
+import models.Recipe;
 
 import java.sql.SQLException;
 
