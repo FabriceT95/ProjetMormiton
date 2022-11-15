@@ -1,0 +1,41 @@
+Règles de gestion : 
+
+Un utilisateur a un nom, un prénom, une adresse mail, un mot de passe
+
+Recette : une recette a une visiblité (estPrivee -> booleén), un nom, une liste d'ingrédients, une liste d'étapes de préparation, un nombre de portions, un temps de préparation, un temps de cuisson, un temps de repos, un coût, une date de création, une note de l'auteur
+
+Commentaire : un texte
+
+Un moment de la journée a un nom
+
+Un type a un nom
+
+Un type de cuisson a un nom
+
+Un difficulté a un libellé
+
+Un recette a un ou plusieurs moments de la journée
+Une recette a un ou plusieurs types
+Une recette a un unique créateur
+Une recette a 0, un ou plusieurs réalisateurs
+Une recette a un type de cuisson
+Une recette a une difficulté
+Un recette a zéro, un ou plusieurs commentaires
+
+Un moment de la journée correspond à zéro, une ou plusieurs recettes
+Un type correspond à zéro, une ou plusieurs recettes
+Un utilisateur peut créer une ou plusieurs recettes
+Un utilisateur peut réaliser zéro, une ou plusieurs recettes
+Un type de cuisson correspond à zéro, une ou plusieurs recettes
+Une difficulté correspond à zéro, une ou plusieurs recettes
+Un commentaire a une recette
+
+Un utilisateur peut être l'auteur de zéro, un ou plusieurs commentaires
+Un commentaire est écrit par un unique utilisateur 
+
+
+
+
+
+
+
