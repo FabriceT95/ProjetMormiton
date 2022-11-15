@@ -1,7 +1,9 @@
 package models;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -170,8 +172,6 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
     }
 
 
-
-
     @Override
     public List<Recipe> findByKeyword(String s) {
         String lowerCaseS = s.toLowerCase();
@@ -259,12 +259,6 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
         return null;
     }
 
-    /**
-     Delete from messages where messageid = '1';
-     Delete from usersmessages where messageid = '1'
-     DELETE t1, t2 FROM t1 INNER JOIN t2 INNER JOIN t3 WHERE t1.id=t2.id AND t2.id=t3.id;
-     */
-
     @Override
     public boolean delete(Long id) throws SQLException {
 
@@ -287,16 +281,39 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
 
     // NOT DONE
     @Override
-    public Recipe update(Recipe element) {
-        long id = element.getId_recipe();
-        String name = book.getName();
-        String query = "UPDATE book SET name=? WHERE id=?";
-        Connection connection = java_jdbc.demo.models.ConnectionManager.getConnectionInstance();
+    public Recipe update(Recipe element) throws SQLException {
+        String query = "UPDATE recipe SET title=?, " +
+                "isPrivate=?, " +
+                "ingredientsList=?, " +
+                "steps=?, " +
+                "servings=?, " +
+                "prepDuration=?, " +
+                "bakingTime=?, " +
+                "restTime=?, " +
+                "cost=?, " +
+                "noteOfTheAuthor=?, " +
+                "id_difficulty=?, " +
+                "id_cooking=? " +
+                "WHERE id=?";
+
+        Connection connection = ConnectionManager.getConnectionInstance();
         try(PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, name);
-            preparedStatement.setLong(2, id);
+            preparedStatement.setString(1, element.getTitle());
+            preparedStatement.setBoolean(2, element.isPrivate());
+            preparedStatement.setString(3, element.getIngredientsList());
+            preparedStatement.setString(4, element.getSteps());
+            preparedStatement.setInt(5, element.getServings());
+            preparedStatement.setInt(6, element.getPreDuration());
+            preparedStatement.setInt(7, element.getBakingTime());
+            preparedStatement.setInt(8, element.getRestTime());
+            preparedStatement.setFloat(9, element.getCost());
+            preparedStatement.setString(10, element.getNoteOfTheAuthor());
+            preparedStatement.setInt(11, element.getDifficulty().getId_difficulty());
+            preparedStatement.setInt(12, element.getCooking().getId_cooking());
+            preparedStatement.setLong(13, element.getId_recipe());
             preparedStatement.executeUpdate();
             connection.commit();
+            return element;
         } catch (SQLException e) {
             connection.rollback();
             e.printStackTrace();
@@ -305,7 +322,118 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
     }
 
     @Override
-    public Recipe create(Recipe element) {
-        return null;
+    public boolean setMomentsOfTheDay(Recipe element, List<Integer> momentsId) throws SQLException {
+        String query1 = "DELETE FROM isAppropriatedTo WHERE id_recipe = ?";
+        StringBuilder query2 = new StringBuilder("INSERT INTO isAppropriatedTo(id_recipe, id_moment_of_the_day) VALUES ");
+        for (Integer moment : momentsId) {
+            query2.append("(?, ").append(moment).append(")");
+        }
+
+        Connection connection = ConnectionManager.getConnectionInstance();
+        try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1)) {
+            preparedStatement1.setLong(1, element.getId_recipe());
+            preparedStatement1.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            connection.rollback();
+            e.printStackTrace();
+            return false;
+        }
+
+        try(PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
+            for(int i = 0; i < momentsId.size(); i++) {
+                preparedStatement2.setInt(i+1, momentsId.get(i));
+            }
+            preparedStatement2.executeUpdate();
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            connection.rollback();
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean setMealTypes(Recipe element, List<Integer> mealTypesId) throws SQLException {
+        String query1 = "DELETE FROM hasMealType WHERE id_recipe = ?";
+        StringBuilder query2 = new StringBuilder("INSERT INTO hasMealType(id_recipe, id_meal_type) VALUES ");
+        for (Integer mealType : mealTypesId) {
+            query2.append("(?, ").append(mealType).append(")");
+        }
+
+        Connection connection = ConnectionManager.getConnectionInstance();
+        try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1)) {
+            preparedStatement1.setLong(1, element.getId_recipe());
+            preparedStatement1.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            connection.rollback();
+            e.printStackTrace();
+            return false;
+        }
+
+        try(PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
+            for(int i = 0; i < mealTypesId.size(); i++) {
+                preparedStatement2.setInt(i+1, mealTypesId.get(i));
+            }
+            preparedStatement2.executeUpdate();
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            connection.rollback();
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    @Override
+    public Recipe create(Recipe element) throws SQLException {
+        String query = "INSERT INTO recipe(isPrivate, title, ingredientsList, " +
+                "steps, servings, prepDuration, bakingTime, " +
+                "restTime, cost, createdAt, noteOfTheAuthor, " +
+                "id_difficulty, id_cooking, id_user)" +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        Connection connection = ConnectionManager.getConnectionInstance();
+        try(PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            preparedStatement.setBoolean(1, element.isPrivate());
+            preparedStatement.setString(2, element.getTitle());
+            preparedStatement.setString(3, element.getIngredientsList());
+            preparedStatement.setString(4, element.getSteps());
+            preparedStatement.setInt(5, element.getServings());
+            preparedStatement.setInt(6, element.getPreDuration());
+            preparedStatement.setInt(7, element.getBakingTime());
+            preparedStatement.setInt(8, element.getRestTime());
+            preparedStatement.setFloat(9, element.getCost());
+            preparedStatement.setDate(10, java.sql.Date.valueOf(element.getCreatedAt()));
+            preparedStatement.setString(11, element.getNoteOfTheAuthor());
+            preparedStatement.setInt(12, element.getDifficulty().getId_difficulty());
+            preparedStatement.setInt(13, element.getCooking().getId_cooking());
+            preparedStatement.setInt(14, element.getUser().getId_user());
+            int affectedRows = preparedStatement.executeUpdate();
+            connection.commit();
+            if(affectedRows == 0) {
+                throw new SQLException("Creating user failed, no rows affected.");
+            }
+            try(ResultSet rs = preparedStatement.getGeneratedKeys()) {
+                if(rs.next()) {
+                    element.setId_recipe(rs.getLong(1));
+                    return element;
+                } else {
+                    System.out.println("Recipe didn't get created !");
+                    return null;
+                }
+            } catch (SQLException s) {
+                s.printStackTrace();
+                return null;
+            }
+        }catch (SQLException e) {
+            System.out.println("Book didn't get created !");
+            connection.rollback();
+            e.printStackTrace();
+            return null;
+        }
     }
 }

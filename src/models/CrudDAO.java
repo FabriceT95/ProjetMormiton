@@ -19,9 +19,12 @@ public interface CrudDAO<E> {
 
     boolean delete(Long id) throws SQLException;
 
-    E update(E element);
+    E update(E element) throws SQLException;
 
-    E create(E element);
+    boolean setMomentsOfTheDay(E element, List<Integer> momentsId) throws SQLException;
+    boolean setMealTypes(E element, List<Integer> mealTypesId) throws SQLException;
+
+    E create(E element) throws SQLException;
 
 
 }

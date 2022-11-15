@@ -158,4 +158,28 @@ public class Recipe {
                 ", user=" + user +
                 '}';
     }
+
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public Cooking getCooking() {
+        return cooking;
+    }
+
+    public void setCooking(Cooking cooking) {
+        this.cooking = cooking;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
