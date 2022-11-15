@@ -1,11 +1,9 @@
 package models;
 
 import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class RecipeJdbcDao implements CrudDAO<Recipe> {
     @Override
@@ -436,4 +434,43 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
             return null;
         }
     }
+
+    public List<MealType> findMealTypesId(Recipe r){
+        List<MealType> mealTypes = new ArrayList<>();
+        Connection connection = ConnectionManager.getConnectionInstance();
+        String query = " SELECT * from hasMealType hmt " +
+                "INNER JOIN mealType ON mt hmt.id_meal_type = mt.id_meal_type " +
+                "where hmt.id_recipe = ?";
+        try(PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, r.getId_recipe());
+            ResultSet rs = preparedStatement.executeQuery();
+            /*while(rs.next()){
+                mealTypes.add(new MealType(rs.getLong("id_meal_type"), rs.getLong("id_recipe")));
+            }*/
+            return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Something went wrong when deleting a recipe !");
+        }
+
+        return null;
+    }
+    @Override
+     public List<MealType> findAllMealTypes(){
+         List<MealType> mealTypes = new ArrayList<>();
+         Connection connection = ConnectionManager.getConnectionInstance();
+         String query = " SELECT * from mealType";
+         try(Statement statement = connection.createStatement();) {
+             ResultSet rs = statement.executeQuery(query);
+            while(rs.next()){
+                mealTypes.add(new MealType(rs.getInt("id_meal_type"), rs.getString("name")));
+            }
+             return mealTypes;
+         } catch (SQLException e) {
+             e.printStackTrace();
+             System.out.println("Something went getting all meal types !");
+         }
+
+         return null;
+     }
 }

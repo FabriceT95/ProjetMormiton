@@ -14,6 +14,7 @@ public interface CrudDAO<E> {
     List<E> findByMealType(MealType mealType);
 
     List<E> findByKeyword(String s);
+    //List<E> findByKeyWordNameMealType(String keyWord, String name, MealType mealType);
 
     E findByRandom();
 
@@ -23,6 +24,7 @@ public interface CrudDAO<E> {
 
     boolean setMomentsOfTheDay(E element, List<Integer> momentsId) throws SQLException;
     boolean setMealTypes(E element, List<Integer> mealTypesId) throws SQLException;
+    List<MealType> findAllMealTypes();
 
     E create(E element) throws SQLException;
 

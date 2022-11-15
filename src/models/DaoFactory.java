@@ -1,5 +1,7 @@
 package models;
 
+import java.util.List;
+
 public class DaoFactory {
     private DaoFactory() {
 
@@ -9,4 +11,7 @@ public class DaoFactory {
         // return new BookMemoryDao();
         return new RecipeJdbcDao();
     }
+    /*public static CrudDAO<Recipe> getRecipeMemoryDao(List<Recipe> recipes){
+        return new RecipeMemoryDao(recipes);
+    }*/
 }
