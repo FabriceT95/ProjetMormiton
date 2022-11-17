@@ -5,12 +5,12 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
 
-public class RecipeJdbcDao implements CrudDAO<Recipe> {
+public class RecipeJdbcDao implements CrudDAO<Recipe>  {
     @Override
     public List<Recipe> findAll() {
         List<Recipe> recipeList = new ArrayList<>();
-        Connection connection = ConnectionManager.getConnectionInstance();
-        try (Statement statement = connection.createStatement();) {
+
+        try (Connection connection = ConnectionManager.getConnectionInstance();Statement statement = connection.createStatement();) {
             String query = "SELECT id_recipe, isPrivate, title, " +
                     "ingredientsList, steps, servings, " +
                     "prepDuration, bakingTime, restTime, " +
@@ -131,20 +131,19 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
         Connection connection = ConnectionManager.getConnectionInstance();
         String query = "SELECT r.id_recipe as 'idRecipe', isPrivate, title, \n" +
                 "                    ingredientsList, steps, servings, \n" +
-                "prepDuration, bakingTime, restTime, \n" +
-                "cost, createdAt, noteOfTheAuthor, \n" +
-                "d.id_difficulty, d.name as 'difficulty_name', c.id_cooking, c.name as 'cooking_name', u.id_user as 'idUser', lastName, firstName, email, mt.name as 'Meal Type Name' FROM recipe r \n" +
+                "                    prepDuration, bakingTime, restTime, \n" +
+                "                    cost, createdAt, noteOfTheAuthor, \n" +
+                "\t\t\t\t\td.id_difficulty, d.name as 'difficulty_name', c.id_cooking, c.name as 'cooking_name', u.id_user as 'idUser', lastName, firstName, email, mt.name as 'Meal Type Name' FROM recipe r \n" +
                 "                    INNER JOIN users u ON u.id_user = r.id_user \n" +
                 "                    INNER JOIN difficulty d ON d.id_difficulty = r.id_difficulty \n" +
                 "                    INNER JOIN hasMealType hmt ON hmt.id_recipe = r.id_recipe\n" +
                 "                    INNER JOIN mealType mt ON mt.id_meal_type = hmt.id_meal_type\n" +
-                "\t\t\t\tINNER JOIN cooking c ON c.id_cooking = r.id_cooking WHERE mt.id_meal_type = ?";
+                "\t\t\t\tINNER JOIN cooking c ON c.id_cooking = r.id_cooking WHERE mt.id_meal_type = ? ;";
         try (PreparedStatement statement = connection.prepareStatement(query);) {
             statement.setLong(1, mealType.getId_meal_type());
-            ResultSet rs = statement.executeQuery(query);
-
+            ResultSet rs = statement.executeQuery();
             while (rs.next()){
-                Recipe recipe = new Recipe(rs.getLong("id_recipe"),
+                Recipe recipe = new Recipe(rs.getLong("idRecipe"),
                         rs.getBoolean("isPrivate"),
                         rs.getString("title"),
                         rs.getString("ingredientsList"),
@@ -175,21 +174,21 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
         String lowerCaseS = s.toLowerCase();
         List<Recipe> recipeList = new ArrayList<>();
         Connection connection = ConnectionManager.getConnectionInstance();
-        String query = "SELECT r.id_recipe as 'idRecipe', isPrivate, title, \n" +
-                "                    ingredientsList, steps, servings, \n" +
-                "                    prepDuration, bakingTime, restTime, \n" +
-                "                    cost, createdAt, noteOfTheAuthor, d.id_difficulty, d.name as 'difficulty_name', c.id_cooking, c.name as 'cooking_name', u.id_user as 'idUser', lastName, firstName\n" +
-                "\t\t\t\t\tFROM recipe r \n" +
-                "                    INNER JOIN users u ON u.id_user = r.id_user \n" +
-                "                    INNER JOIN difficulty d ON d.id_difficulty = r.id_difficulty \n" +
-                "\t\t\t\t\tINNER JOIN cooking c ON c.id_cooking = r.id_cooking WHERE (lower(title) LIKE '%choco%' OR lower(ingredientsList) LIKE '%?%' OR  lower(steps) LIKE '%?%' OR lower(noteOfTheAuthor) LIKE '%?%');";
+        String query = "SELECT r.id_recipe as 'idRecipe', isPrivate, title," +
+                "ingredientsList, steps, servings," +
+                "prepDuration, bakingTime, restTime," +
+                "cost, createdAt, noteOfTheAuthor, d.id_difficulty, d.name as 'difficulty_name', c.id_cooking, c.name as 'cooking_name', u.id_user as 'idUser', lastName, firstName" +
+                "FROM recipe r" +
+                "                    INNER JOIN users u ON u.id_user = r.id_user" +
+                "                    INNER JOIN difficulty d ON d.id_difficulty = r.id_difficulty " +
+                "\t\t\t\t\tINNER JOIN cooking c ON c.id_cooking = r.id_cooking WHERE (lower(title) LIKE '%?%' OR lower(ingredientsList) LIKE '%?%' OR  lower(steps) LIKE '%?%' OR lower(noteOfTheAuthor) LIKE '%?%');";
 
         try (PreparedStatement statement = connection.prepareStatement(query);) {
             statement.setString(1,lowerCaseS);
             statement.setString(2,lowerCaseS);
             statement.setString(3,lowerCaseS);
             statement.setString(4,lowerCaseS);
-            ResultSet rs = statement.executeQuery(query);
+            ResultSet rs = statement.executeQuery();
             while (rs.next()){
                 Recipe recipe = new Recipe(rs.getLong("idRecipe"),
                         rs.getBoolean("isPrivate"),
@@ -259,17 +258,13 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
 
     @Override
     public boolean delete(Long id) throws SQLException {
-
-        Connection connection = ConnectionManager.getConnectionInstance();
-
-        String query = " DELETE FROM recipe WHERE id_recipe = ?;";
-        try(PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                String query = " DELETE FROM recipe WHERE id_recipe = ?;";
+        try(Connection connection = ConnectionManager.getConnectionInstance(); PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setLong(1, id);
             int numberRow = preparedStatement.executeUpdate();
             connection.commit();
             return numberRow > 0;
         } catch (SQLException e) {
-            connection.rollback();
             e.printStackTrace();
             System.out.println("Something went wrong when deleting a recipe !");
         }
@@ -323,66 +318,85 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
     public boolean setMomentsOfTheDay(Recipe element, List<Integer> momentsId) throws SQLException {
         String query1 = "DELETE FROM isAppropriatedTo WHERE id_recipe = ?";
         StringBuilder query2 = new StringBuilder("INSERT INTO isAppropriatedTo(id_recipe, id_moment_of_the_day) VALUES ");
-        for (Integer moment : momentsId) {
-            query2.append("(?, ").append(moment).append(")");
+        for(int i = 0; i<momentsId.size(); i++) {
+            query2.append("(?, ").append(momentsId.get(i)).append(")");
+            if(i <momentsId.size()-1) query2.append(',');
         }
+        System.out.println("Id_recipe  : " + element.getId_recipe());
 
-        Connection connection = ConnectionManager.getConnectionInstance();
-        try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1)) {
-            preparedStatement1.setLong(1, element.getId_recipe());
-            preparedStatement1.executeUpdate();
-            connection.commit();
-        } catch (SQLException e) {
-            connection.rollback();
-            e.printStackTrace();
-            return false;
-        }
-
-        try(PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
-            for(int i = 0; i < momentsId.size(); i++) {
-                preparedStatement2.setInt(i+1, momentsId.get(i));
+        try(Connection connection = ConnectionManager.getConnectionInstance();) {
+            System.out.println(2);
+            try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1)) {
+                System.out.println(3);
+                preparedStatement1.setLong(1, element.getId_recipe());
+                System.out.println(4);
+                preparedStatement1.executeUpdate();
+                System.out.println(5);
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+                return false;
             }
-            preparedStatement2.executeUpdate();
-            connection.commit();
-            return true;
-        } catch (SQLException e) {
-            connection.rollback();
-            e.printStackTrace();
+            try(PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
+                System.out.println(6);
+                for(int i = 0; i < momentsId.size(); i++) {
+                    System.out.println("("+element.getId_recipe()+","+momentsId.get(i)+" )");
+                    preparedStatement2.setLong(i+1, element.getId_recipe());
+                }
+                preparedStatement2.executeUpdate();
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+            }
+
+
         }
+
+
+
 
         return false;
     }
 
     @Override
-    public boolean setMealTypes(Recipe element, List<Integer> mealTypesId) throws SQLException {
+    public boolean setMealTypes(Recipe element, List<Long> mealTypesId) throws SQLException {
         String query1 = "DELETE FROM hasMealType WHERE id_recipe = ?";
         StringBuilder query2 = new StringBuilder("INSERT INTO hasMealType(id_recipe, id_meal_type) VALUES ");
-        for (Integer mealType : mealTypesId) {
-            query2.append("(?, ").append(mealType).append(")");
+        for(int i = 0; i<mealTypesId.size(); i++) {
+            query2.append("(?, ").append(mealTypesId.get(i)).append(")");
+            if(i <mealTypesId.size()-1) query2.append(',');
         }
 
-        Connection connection = ConnectionManager.getConnectionInstance();
-        try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1)) {
-            preparedStatement1.setLong(1, element.getId_recipe());
-            preparedStatement1.executeUpdate();
-            connection.commit();
-        } catch (SQLException e) {
-            connection.rollback();
-            e.printStackTrace();
-            return false;
-        }
+            try (Connection connection = ConnectionManager.getConnectionInstance();) {
+                try(PreparedStatement preparedStatement1 = connection.prepareStatement(query1);) {
+                    preparedStatement1.setLong(1, element.getId_recipe());
+                    preparedStatement1.executeUpdate();
 
-        try(PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
-            for(int i = 0; i < mealTypesId.size(); i++) {
-                preparedStatement2.setInt(i+1, mealTypesId.get(i));
+                }
+
+                try(
+                    PreparedStatement preparedStatement2 = connection.prepareStatement(query2.toString())) {
+                    for(int i = 0; i < mealTypesId.size(); i++) {
+                        preparedStatement2.setLong(i+1, element.getId_recipe());
+                    }
+                    preparedStatement2.executeUpdate();
+                    connection.commit();
+                    return true;
+                } catch (SQLException e) {
+                    // connection.rollback();
+                    e.printStackTrace();
+                }
+            } catch (SQLException e) {
+                // connection.rollback();
+                e.printStackTrace();
+                return false;
             }
-            preparedStatement2.executeUpdate();
-            connection.commit();
-            return true;
-        } catch (SQLException e) {
-            connection.rollback();
-            e.printStackTrace();
-        }
+
+
+
 
         return false;
     }
@@ -394,8 +408,9 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
                 "restTime, cost, createdAt, noteOfTheAuthor, " +
                 "id_difficulty, id_cooking, id_user)" +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        Connection connection = ConnectionManager.getConnectionInstance();
-        try(PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+        try(Connection connection = ConnectionManager.getConnectionInstance();
+            PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setBoolean(1, element.isPrivate());
             preparedStatement.setString(2, element.getTitle());
             preparedStatement.setString(3, element.getIngredientsList());
@@ -429,7 +444,7 @@ public class RecipeJdbcDao implements CrudDAO<Recipe> {
             }
         }catch (SQLException e) {
             System.out.println("Book didn't get created !");
-            connection.rollback();
+            // connection.rollback();
             e.printStackTrace();
             return null;
         }

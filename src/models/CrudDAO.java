@@ -23,7 +23,7 @@ public interface CrudDAO<E> {
     E update(E element) throws SQLException;
 
     boolean setMomentsOfTheDay(E element, List<Integer> momentsId) throws SQLException;
-    boolean setMealTypes(E element, List<Integer> mealTypesId) throws SQLException;
+    boolean setMealTypes(E element, List<Long> mealTypesId) throws SQLException;
     List<MealType> findAllMealTypes();
 
     E create(E element) throws SQLException;

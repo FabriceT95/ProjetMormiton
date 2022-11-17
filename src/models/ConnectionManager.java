@@ -15,15 +15,17 @@ public final class ConnectionManager {
     }
 
     public static Connection getConnectionInstance() {
-        if(CONNECTION_INSTANCE == null) {
             try{
-                loadDriver();
-                CONNECTION_INSTANCE = DriverManager.getConnection(URL, "root", "FormationM2i");
-                CONNECTION_INSTANCE.setAutoCommit(false);
+                if(CONNECTION_INSTANCE == null || CONNECTION_INSTANCE.isClosed()) {
+                    loadDriver();
+                    CONNECTION_INSTANCE = DriverManager.getConnection(URL, "root", "FormationM2i");
+                    CONNECTION_INSTANCE.setAutoCommit(false);
+                }
             } catch (SQLException e) {
+                System.out.println(e.getMessage());
                 System.err.println("Connex impossible");
             }
-        }
+
         return CONNECTION_INSTANCE;
     }
 
